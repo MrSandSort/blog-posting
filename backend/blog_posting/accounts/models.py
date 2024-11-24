@@ -1,4 +1,3 @@
-
 from django.db import models
 from .models import Category
 from django.contrib.auth.models import User
