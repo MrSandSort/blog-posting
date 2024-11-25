@@ -10,11 +10,9 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
 
 class UserModelSerializer(serializers.ModelSerializer):
-    profile= UserProfileSerializer(source='user-profile',read_only=True)
-
     class Meta:
         model= User
-        fields=['id','username','email','profile']
+        fields=['id','username','email','password']
 
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
@@ -40,7 +38,7 @@ class LikeSerializer(serializers.ModelSerializer):
 
 class BlogPostSerializer(serializers.ModelSerializer):
     author = serializers.StringRelatedField(read_only=True)
-    categories= serializers.SlugRelatedField(many=True, queryset=Category.objects().all(), slug_field='slug')
+    categories= serializers.SlugRelatedField(many=True, queryset=Category.objects.all(), slug_field='slug')
     comments= CommentSerializer(many=True, read_only=True, source='comments')
     likes= LikeSerializer(many=True, read_only=True, source='likes')
 
