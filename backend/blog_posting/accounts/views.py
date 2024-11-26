@@ -1,14 +1,21 @@
 from django.shortcuts import render
 from rest_framework.views import APIView
-from rest_framework.permissions import AllowAny
-from .serializers import UserModelSerializer
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from .serializers import UserModelSerializer, BlogPostSerializer
 from django.contrib.auth import authenticate
 from rest_framework.authtoken.models import Token
 from django.contrib.auth.models import User
 from rest_framework import status
 from rest_framework.response import Response
+from .models import BlogPost
 
 class RegisterView(APIView):
+
+    def get(self,request):
+        blogs= User.objects.all()
+        serializers=UserModelSerializer(blogs, many=True)
+        return Response(serializers.data)
+    
     
     def post(self, request):
 
@@ -45,4 +52,22 @@ class LoginView(APIView):
         return Response({'error':'Invalid Credentials'}, status=status.HTTP_401_UNAUTHORIZED)
 
     
- 
+
+class BlogListCreateView(APIView):
+    
+    permission_classes=[IsAuthenticated]
+
+    def get(self,request):
+        blogs= BlogPost.objects.all()
+        serializers=BlogPostSerializer(blogs, many=True)
+        return Response(serializers.data)
+    
+    def post(self,request):
+
+        serializer = BlogPostSerializer(data=request.data, context={'request': request})
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+

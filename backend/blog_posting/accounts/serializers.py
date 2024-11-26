@@ -38,11 +38,16 @@ class LikeSerializer(serializers.ModelSerializer):
 
 class BlogPostSerializer(serializers.ModelSerializer):
     author = serializers.StringRelatedField(read_only=True)
-    categories= serializers.SlugRelatedField(many=True, queryset=Category.objects.all(), slug_field='slug')
-    comments= CommentSerializer(many=True, read_only=True, source='comments')
-    likes= LikeSerializer(many=True, read_only=True, source='likes')
+    # categories= serializers.SlugRelatedField(many=True, queryset=Category.objects.all(), slug_field='slug')
+    comments= CommentSerializer(many=True, read_only=True)
+    likes= LikeSerializer(many=True, read_only=True)
 
     class Meta:
         model= BlogPost
-        fields=['id','title','content','author','categories','image','status',
+        fields=['id','title','content','author',
                 'created_at','updated_at','likes','comments']
+
+    def create(self, validated_data):
+        user = self.context['request'].user  # Get the logged-in user
+        validated_data['author'] = user  # Set the author to the logged-in user
+        return super().create(validated_data)   
