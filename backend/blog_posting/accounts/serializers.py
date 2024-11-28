@@ -44,7 +44,7 @@ class BlogPostSerializer(serializers.ModelSerializer):
 
     class Meta:
         model= BlogPost
-        fields=['id','title','content','author',
+        fields=['id','title','content','images',author',
                 'created_at','updated_at','likes','comments']
 
     def create(self, validated_data):

@@ -58,7 +58,7 @@ class BlogListCreateView(APIView):
     permission_classes=[IsAuthenticated]
 
     def get(self,request):
-        blogs= BlogPost.objects.all()
+        blogs= BlogPost.objects.all().order_by('-created_at')
         serializers=BlogPostSerializer(blogs, many=True)
         return Response(serializers.data)
     
