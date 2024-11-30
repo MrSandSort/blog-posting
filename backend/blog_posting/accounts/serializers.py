@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import UserProfile, Category, BlogPost, Comment, Likes
 from django.contrib.auth.models import User
+from django.utils.timesince import timesince
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
@@ -41,11 +42,15 @@ class BlogPostSerializer(serializers.ModelSerializer):
     # categories= serializers.SlugRelatedField(many=True, queryset=Category.objects.all(), slug_field='slug')
     comments= CommentSerializer(many=True, read_only=True)
     likes= LikeSerializer(many=True, read_only=True)
+    time_since_posted=serializers.SerializerMethodField(); 
+
+    def get_time_since_posted(self, obj):
+        return timesince(obj.created_at)[0]
 
     class Meta:
         model= BlogPost
-        fields=['id','title','content','images',author',
-                'created_at','updated_at','likes','comments']
+        fields=['id','title','content','image','author',
+                'created_at','updated_at','likes','comments','time_since_posted']
 
     def create(self, validated_data):
         user = self.context['request'].user  # Get the logged-in user

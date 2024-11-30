@@ -12,8 +12,8 @@ from .models import BlogPost
 class RegisterView(APIView):
 
     def get(self,request):
-        blogs= User.objects.all()
-        serializers=UserModelSerializer(blogs, many=True)
+        users= User.objects.all()
+        serializers=UserModelSerializer(users, many=True)
         return Response(serializers.data)
     
     
@@ -35,21 +35,21 @@ class RegisterView(APIView):
             password=validated_data['password']
         )
 
-class LoginView(APIView):
+# class LoginView(APIView):
 
-    permission_classes= [AllowAny]
+#     permission_classes= [AllowAny]
 
-    def post(self,request):
-        username= request.data.get('username')
-        password= request.data.get('password')
+#     def post(self,request):
+#         username= request.data.get('username')
+#         password= request.data.get('password')
 
-        user= authenticate(username=username, password=password)
+#         user= authenticate(username=username, password=password)
 
-        if user is not None:
-            token, created= Token.objects.get_or_create(user=user)
-            return Response({'token':token.key}, status=status.HTTP_200_OK)
+#         if user is not None:
+#             token, created= Token.objects.get_or_create(user=user)
+#             return Response({'token':token.key}, status=status.HTTP_200_OK)
         
-        return Response({'error':'Invalid Credentials'}, status=status.HTTP_401_UNAUTHORIZED)
+#         return Response({'error':'Invalid Credentials'}, status=status.HTTP_401_UNAUTHORIZED)
 
     
 
