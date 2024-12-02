@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from .serializers import UserModelSerializer, BlogPostSerializer, UserProfileSerializer
@@ -35,28 +35,10 @@ class RegisterView(APIView):
             email=validated_data['email'],
             password=validated_data['password']
         )
-
-# class LoginView(APIView):
-
-#     permission_classes= [AllowAny]
-
-#     def post(self,request):
-#         username= request.data.get('username')
-#         password= request.data.get('password')
-
-#         user= authenticate(username=username, password=password)
-
-#         if user is not None:
-#             token, created= Token.objects.get_or_create(user=user)
-#             return Response({'token':token.key}, status=status.HTTP_200_OK)
-        
-#         return Response({'error':'Invalid Credentials'}, status=status.HTTP_401_UNAUTHORIZED)
-
     
-
 class BlogListCreateView(APIView):
     
-    permission_classes=[IsAuthenticated]
+    permission_classes=[IsAuthenticated] 
 
     def get(self,request):
         blogs= BlogPost.objects.all().order_by('-created_at')
@@ -92,8 +74,6 @@ class ProfileView(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)   
-    
-
 
 class UserProfileAPIView(APIView):
     
@@ -138,3 +118,36 @@ class UserProfileAPIView(APIView):
             return Response({"detail": "Profile deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
         except UserProfile.DoesNotExist:
             return Response({"detail": "User profile not found."}, status=status.HTTP_404_NOT_FOUND)
+        
+
+class UserBlogsAPIView(APIView):
+
+    def get(self, request):
+        blogs = BlogPost.objects.filter(author=request.user).order_by('-created_at')
+        serializer = BlogPostSerializer(blogs, many=True)
+        return Response(serializer.data)
+    
+
+class BlogDetailView(APIView):
+    permission_classes= [IsAuthenticated]
+
+    def get(self, request, pk, *args, **kwargs):
+        try:
+            blog = BlogPost.objects.get(pk=pk)
+            serializer = BlogPostSerializer(blog)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except BlogPost.DoesNotExist:
+            return Response({"error": "Blog not found"}, status=status.HTTP_404_NOT_FOUND)
+
+    def put(self, request, pk):
+        blog = get_object_or_404(BlogPost, pk=pk, author=request.user)
+        serializer = BlogPostSerializer(blog, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, pk):
+        blog = get_object_or_404(BlogPost, pk=pk, author=request.user)
+        blog.delete()
+        return Response({"message": "Blog deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
