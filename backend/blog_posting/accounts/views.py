@@ -1,13 +1,14 @@
 from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
-from .serializers import UserModelSerializer, BlogPostSerializer
+from .serializers import UserModelSerializer, BlogPostSerializer, UserProfileSerializer
 from django.contrib.auth import authenticate
 from rest_framework.authtoken.models import Token
 from django.contrib.auth.models import User
+from django.contrib.auth.hashers import make_password
 from rest_framework import status
 from rest_framework.response import Response
-from .models import BlogPost
+from .models import BlogPost, UserProfile
 
 class RegisterView(APIView):
 
@@ -71,3 +72,69 @@ class BlogListCreateView(APIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
+class ProfileView(APIView):
+    permission_classes=[IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        serializer = UserModelSerializer(user)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    def put(self, request):
+        
+        user = request.user
+        data = request.data
+
+        serializer = UserModelSerializer(user, data=data, partial=True)
+        
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)   
+    
+
+
+class UserProfileAPIView(APIView):
+    
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        try:
+            profile = UserProfile.objects.get(user=request.user)
+        except UserProfile.DoesNotExist:
+            return Response({"detail": "User profile not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = UserProfileSerializer(profile)
+        return Response(serializer.data)
+
+    def post(self, request, *args, **kwargs):
+        if UserProfile.objects.filter(user=request.user).exists():
+            return Response({"detail": "Profile already exists."}, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = UserProfileSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(user=request.user) 
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def put(self, request, *args, **kwargs):
+        try:
+            profile = UserProfile.objects.get(user=request.user)
+        except UserProfile.DoesNotExist:
+            return Response({"detail": "User profile not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = UserProfileSerializer(profile, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, *args, **kwargs):
+
+        try:
+            profile = UserProfile.objects.get(user=request.user)
+            profile.delete()
+            return Response({"detail": "Profile deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
+        except UserProfile.DoesNotExist:
+            return Response({"detail": "User profile not found."}, status=status.HTTP_404_NOT_FOUND)
