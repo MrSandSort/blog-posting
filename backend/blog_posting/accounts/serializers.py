@@ -42,17 +42,20 @@ class BlogPostSerializer(serializers.ModelSerializer):
     # categories= serializers.SlugRelatedField(many=True, queryset=Category.objects.all(), slug_field='slug')
     comments= CommentSerializer(many=True, read_only=True)
     likes= LikeSerializer(many=True, read_only=True)
-    time_since_posted=serializers.SerializerMethodField(); 
+    likes_count= serializers.SerializerMethodField()
+   
 
-    def get_time_since_posted(self, obj):
-        return timesince(obj.created_at)[0]
-
+    def get_likes_count(self, obj):
+        
+        return Likes.objects.filter(post=obj).count()
+    
+ 
     class Meta:
         model= BlogPost
         fields=['id','title','content','image','author',
-                'created_at','updated_at','likes','comments','time_since_posted']
+                'created_at','updated_at','likes','comments','likes_count', 'liked_by_user']
 
     def create(self, validated_data):
-        user = self.context['request'].user  # Get the logged-in user
-        validated_data['author'] = user  # Set the author to the logged-in user
+        user = self.context['request'].user  
+        validated_data['author'] = user  
         return super().create(validated_data)   

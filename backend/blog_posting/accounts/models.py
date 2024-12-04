@@ -31,6 +31,8 @@ class BlogPost(models.Model):
     # categories = models.ManyToManyField(Category, blank=True, related_name='blog_posts')
     created_at= models.DateTimeField(auto_now_add=True)
     updated_at= models.DateTimeField(auto_now_add=True)
+    likes_count = models.PositiveIntegerField(default=0)
+    liked_by_user= models.BooleanField(default=False) 
 
     def __str__(self):
         return self.title
@@ -46,4 +48,7 @@ class Likes(models.Model):
     user= models.ForeignKey(User, on_delete=models.CASCADE)
     post= models.ForeignKey(BlogPost, on_delete=models.CASCADE, related_name='likes')
     created_at= models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'post') 
 

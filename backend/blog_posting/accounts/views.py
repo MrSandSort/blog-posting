@@ -1,14 +1,14 @@
 from django.shortcuts import render, get_object_or_404
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
-from .serializers import UserModelSerializer, BlogPostSerializer, UserProfileSerializer
+from .serializers import UserModelSerializer, BlogPostSerializer, UserProfileSerializer, LikeSerializer
 from django.contrib.auth import authenticate
 from rest_framework.authtoken.models import Token
 from django.contrib.auth.models import User
 from django.contrib.auth.hashers import make_password
 from rest_framework import status
 from rest_framework.response import Response
-from .models import BlogPost, UserProfile
+from .models import BlogPost, UserProfile, Likes
 
 class RegisterView(APIView):
 
@@ -38,12 +38,14 @@ class RegisterView(APIView):
     
 class BlogListCreateView(APIView):
     
-    permission_classes=[IsAuthenticated] 
 
-    def get(self,request):
-        blogs= BlogPost.objects.all().order_by('-created_at')
-        serializers=BlogPostSerializer(blogs, many=True)
-        return Response(serializers.data)
+    permission_classes = [IsAuthenticated] 
+    def get(self, request):
+       
+        blogs = BlogPost.objects.all().order_by('-created_at')
+        serializer = BlogPostSerializer(blogs, many=True)
+        return Response(serializer.data)
+
     
     def post(self,request):
 
@@ -151,3 +153,30 @@ class BlogDetailView(APIView):
         blog = get_object_or_404(BlogPost, pk=pk, author=request.user)
         blog.delete()
         return Response({"message": "Blog deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
+
+class LikePostAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, blog_id):
+        try:
+            post = BlogPost.objects.get(id=blog_id)
+        except BlogPost.DoesNotExist:
+            return Response({"detail": "Post not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        existing_like = Likes.objects.filter(user=request.user, post=post).first()
+
+        if existing_like:
+            existing_like.delete()
+            post.liked_by_user= False
+            post.likes_count -= 1
+            post.save()
+        else:
+            Likes.objects.create(user=request.user, post=post)
+            post.liked_by_user=True
+            post.likes_count += 1
+
+        post.save()  
+        return Response({
+            "detail": "Post liked." if not existing_like else "Post unliked.",
+            "likes_count": post.likes_count, "liked_by_user": post.liked_by_user
+        }, status=status.HTTP_200_OK)

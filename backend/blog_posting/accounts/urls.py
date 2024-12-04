@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import RegisterView, BlogListCreateView, ProfileView, UserProfileAPIView, BlogDetailView, UserBlogsAPIView
+from .views import RegisterView, BlogListCreateView, ProfileView, UserProfileAPIView, BlogDetailView, UserBlogsAPIView, LikePostAPIView
 
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
@@ -15,5 +15,5 @@ urlpatterns=[
     path('user-profile/',UserProfileAPIView.as_view(), name='user-profile'),
     path('user-blogs/', UserBlogsAPIView.as_view(), name='user-blogs' ),
     path('my-blogs/<int:pk>/', BlogDetailView.as_view(), name='user-blog-detail'),
-    
+    path('blogs/<int:blog_id>/like/',LikePostAPIView.as_view(), name='like-posts')
 ]
