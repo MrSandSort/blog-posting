@@ -31,8 +31,6 @@ class BlogPost(models.Model):
     # categories = models.ManyToManyField(Category, blank=True, related_name='blog_posts')
     created_at= models.DateTimeField(auto_now_add=True)
     updated_at= models.DateTimeField(auto_now_add=True)
-    likes_count = models.PositiveIntegerField(default=0)
-    liked_by_user= models.BooleanField(default=False) 
 
     def __str__(self):
         return self.title

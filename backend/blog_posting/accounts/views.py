@@ -1,14 +1,14 @@
 from django.shortcuts import render, get_object_or_404
 from rest_framework.views import APIView
-from rest_framework.permissions import AllowAny, IsAuthenticated
-from .serializers import UserModelSerializer, BlogPostSerializer, UserProfileSerializer, LikeSerializer
+from rest_framework.permissions import AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly
+from .serializers import UserModelSerializer, BlogPostSerializer, UserProfileSerializer, LikeSerializer,CommentSerializer
 from django.contrib.auth import authenticate
 from rest_framework.authtoken.models import Token
 from django.contrib.auth.models import User
 from django.contrib.auth.hashers import make_password
 from rest_framework import status
 from rest_framework.response import Response
-from .models import BlogPost, UserProfile, Likes
+from .models import BlogPost, UserProfile, Likes, Comment
 
 class RegisterView(APIView):
 
@@ -167,16 +167,65 @@ class LikePostAPIView(APIView):
 
         if existing_like:
             existing_like.delete()
-            post.liked_by_user= False
-            post.likes_count -= 1
-            post.save()
+            liked_by_user = False
         else:
             Likes.objects.create(user=request.user, post=post)
-            post.liked_by_user=True
-            post.likes_count += 1
+            liked_by_user = True
 
-        post.save()  
+        likes_count = Likes.objects.filter(post=post).count()
+
         return Response({
-            "detail": "Post liked." if not existing_like else "Post unliked.",
-            "likes_count": post.likes_count, "liked_by_user": post.liked_by_user
+            "detail": "Post liked." if liked_by_user else "Post unliked.",
+            "likes_count": likes_count,
+            "liked_by_user": liked_by_user,
         }, status=status.HTTP_200_OK)
+    
+class CommentListCreateView(APIView):   
+    permission_classes=  [IsAuthenticatedOrReadOnly]
+
+    def get(self,request,blog_id):
+        blogs= get_object_or_404(BlogPost, id= blog_id)
+        comments = Comment.objects.filter(post=blogs)
+        serializer= CommentSerializer(comments, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def post(self,request,blog_id):
+        blogs= get_object_or_404(BlogPost, id=blog_id)
+        serializer= CommentSerializer(data=request.data)
+
+        if serializer.is_valid():
+            serializer.save(author= request.user, post=blogs)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+class CommentDetailView(APIView):
+
+    permission_classes=[IsAuthenticatedOrReadOnly]
+
+    def get_object(self,comment_id):
+        return get_object_or_404(Comment, id=comment_id)
+
+    def get(self, request, comment_id):
+        comment= self.get_object(comment_id)  
+        serializer= CommentSerializer(comment)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    def put(self, request, comment_id):
+        comment = self.get_object(comment_id)
+        if comment.author != request.user:
+            return Response(
+                {"detail": "You do not have permission to edit this comment."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        serializer = CommentSerializer(comment, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    def delete(self, request, comment_id):
+        comment = self.get_object(comment_id)
+        if comment.author != request.user:
+            return Response( {"detail": "You do not have permission to delete this comment."}, status=status.HTTP_403_FORBIDDEN)
+        comment.delete()
+        return Response({"detail": "Comment deleted."}, status=status.HTTP_204_NO_CONTENT)
