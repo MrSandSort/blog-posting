@@ -39,25 +39,3 @@ Welcome to the **Blog Posting Backend** project! This repository is the backend 
 
 
 
-### Project Structure 
-
-
-**blog-posting-backend/
-├── accounts/                   # User and blog-related functionality
-│   ├── migrations/             # Database migrations
-│   ├── models.py               # Django models for User, Blog, and Comment
-│   ├── serializers.py          # Serializers for API responses
-│   ├── views.py                # Views for handling requests
-│   ├── urls.py                 # URL routing for the accounts app
-│   ├── tests.py                # Unit tests for the accounts app
-├── blog_posting_backend/       # Main project settings
-│   ├── __init__.py
-│   ├── settings.py             # Settings for the Django project
-│   ├── urls.py                 # Global URL routing
-│   ├── wsgi.py                 # WSGI configuration
-│   ├── asgi.py                 # ASGI configuration
-├── manage.py                   # Django management script
-├── requirements.txt            # List of required dependencies
-├── .env                        # Environment variables for sensitive data
-└── README.md                   # Project documentation
-**
