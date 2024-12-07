@@ -39,7 +39,10 @@ Welcome to the **Blog Posting Backend** project! This repository is the backend 
 
 
 
-blog-posting-backend/
+### Project Structure 
+
+
+**blog-posting-backend/
 ├── accounts/                   # User and blog-related functionality
 │   ├── migrations/             # Database migrations
 │   ├── models.py               # Django models for User, Blog, and Comment
@@ -57,4 +60,4 @@ blog-posting-backend/
 ├── requirements.txt            # List of required dependencies
 ├── .env                        # Environment variables for sensitive data
 └── README.md                   # Project documentation
-
+**
